@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Settings, Monitor, Smartphone, Trophy, Minimize, Maximize, ChevronLeft, ChevronRight, AlertCircle, Upload, Type, Image as ImageIcon, ArrowLeft, ArrowRight, Plus, Minus } from 'lucide-react';
+import { Play, Pause, RotateCcw, Settings, Monitor, Smartphone, Trophy, Minimize, Maximize, ChevronLeft, ChevronRight, AlertCircle, Upload, Type, Image as ImageIcon, ArrowLeft, ArrowRight, Plus, Minus, MousePointerClick } from 'lucide-react';
 
 const SPORTS_CONFIG = {
   football: { name: "Football", periodName: "Mi-temps", periods: 2, timePerPeriod: 45, countDirection: "up", showSets: false, showFouls: false, foulLimit: 0 },
   basketball: { name: "Basketball", periodName: "Q-Temps", periods: 4, timePerPeriod: 10, countDirection: "down", showSets: false, showFouls: true, foulLimit: 5 },
   volleyball: { name: "Volleyball", periodName: "Set", periods: 5, timePerPeriod: 0, countDirection: "none", showSets: true, showFouls: false, foulLimit: 0 },
   futsal: { name: "Futsal", periodName: "Mi-temps", periods: 2, timePerPeriod: 20, countDirection: "down", showSets: false, showFouls: true, foulLimit: 5 },
-  handball: { name: "Handball", periodName: "Mi-temps", periods: 2, timePerPeriod: 30, countDirection: "down", showSets: false, showFouls: false, foulLimit: 0 },
-  tennis: { name: "Tennis", periodName: "Set", periods: 3, timePerPeriod: 0, countDirection: "up", showSets: true, showFouls: false, foulLimit: 0 }
+  handball: { name: "Handball", periodName: "Mi-temps", periods: 2, timePerPeriod: 30, countDirection: "down", showSets: false, showFouls: false, foulLimit: 0 }
 };
 
 // --- GESTION TACTILE ---
@@ -298,15 +297,18 @@ const App = () => {
           {/* CORRECTION : Suppression de border-r pour harmonisation */}
           <div className="h-full flex flex-col bg-gradient-to-br from-slate-900 to-slate-950 relative overflow-hidden">
 
-            {/* [40% HAUT : LOGO/NOM] */}
-            <div className="w-full shrink-0 flex flex-col" style={{ height: '40%' }}>
+            {/* [40% -> 37% HAUT : LOGO/NOM] */}
+            {/* MODIFICATION : Hauteur réduite à 37% */}
+            <div className="w-full shrink-0 flex flex-col" style={{ height: '37%' }}>
               {/* Barre de couleur */}
               <div className="h-1 w-full shrink-0" style={{ backgroundColor: homeColor }}></div>
 
               {/* Conteneur Logo/Nom - AVEC PADDING pour le contraindre dans un "rectangle" */}
-              <div className="flex-1 w-full flex items-center justify-center p-4 md:p-8 overflow-hidden">
+              {/* MODIFICATION : Padding top réduit (pt-2 md:pt-4) pour remonter le contenu vers la barre */}
+              <div className="flex-1 w-full flex items-end justify-center px-6 pt-2 pb-2 md:px-10 md:pt-4 md:pb-2 overflow-hidden">
                 {useHomeLogo && homeLogo ? (
-                  <div className="w-full h-full flex justify-center items-center">
+                  // MODIFICATION : Hauteur max fixée à 90% pour éviter l'écrasement
+                  <div className="w-full h-[90%] flex justify-center items-center">
                     <img src={homeLogo} alt="Home Logo" className="max-h-full max-w-full object-contain drop-shadow-2xl" />
                   </div>
                 ) : (
@@ -319,14 +321,11 @@ const App = () => {
             <GestureArea
               className="w-full flex flex-col items-center justify-center relative group p-0"
               style={{ height: '45%' }}
-              onSwipeLeft={() => modifyScore('home', 1)}
+              onTap={() => modifyScore('home', 1)}
               onSwipeRight={() => modifyScore('home', -1)}
             >
               {!tvMode && (
-                <>
-                  <div className="absolute left-2 top-1/2 -translate-y-1/2 text-white/5 group-hover:text-white/20 transition-colors"><ChevronLeft size={40} /></div>
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-white/5 group-hover:text-white/20 transition-colors"><ChevronRight size={40} /></div>
-                </>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-white/5 group-hover:text-white/20 transition-colors"><ChevronRight size={40} /></div>
               )}
               <span
                 className="font-bold leading-none select-none tabular-nums relative z-10"
@@ -340,10 +339,15 @@ const App = () => {
               </span>
             </GestureArea>
 
-            {/* [15% BAS : SETS/FAUTES] - MODIFIÉ (A COTE) */}
-            <div className="w-full shrink-0 grid grid-cols-1 pb-2 bg-slate-900/20" style={{ height: '15%', minHeight: '60px' }}>
+            {/* [15% -> 18% BAS : SETS/FAUTES] - MODIFIÉ (A COTE) */}
+            {/* MODIFICATION : Hauteur augmentée à 18% */}
+            <div className="w-full shrink-0 grid grid-cols-1 pb-2 bg-slate-900/20" style={{ height: '18%', minHeight: '60px' }}>
               {config.showSets && (
-                <GestureArea className="h-full w-full flex flex-col items-center justify-center border-t border-slate-800/50 group relative" onTap={() => modifySets('home', 1)} onSwipeLeft={() => modifySets('home', 1)} onSwipeRight={() => modifySets('home', -1)}>
+                <GestureArea
+                  className="h-full w-full flex flex-col items-center justify-center border-t border-slate-800/50 group relative"
+                  onTap={() => modifySets('home', 1)}
+                  onSwipeRight={() => modifySets('home', -1)}
+                >
                   <div className="flex flex-row items-center justify-center h-full w-full gap-4">
                     <span className="text-xs md:text-base font-bold uppercase text-slate-500 tracking-wider">Sets</span>
                     <div className="text-4xl md:text-6xl font-bold leading-none tabular-nums">{homeSets}</div>
@@ -353,7 +357,8 @@ const App = () => {
               {config.showFouls && (
                 <GestureArea
                   className="h-full w-full flex flex-col items-center justify-center border-t border-slate-800/50 group relative transition-colors"
-                  onSwipeLeft={() => modifyFouls('home', 1)} onSwipeRight={() => modifyFouls('home', -1)}
+                  onTap={() => modifyFouls('home', 1)}
+                  onSwipeRight={() => modifyFouls('home', -1)}
                 >
                   <div className="flex flex-row items-center justify-center h-full w-full gap-4">
                     <span className={`text-xs md:text-base font-bold uppercase tracking-wider flex items-center gap-2 ${homeFouls >= config.foulLimit ? 'text-red-200' : 'text-slate-500'}`}>
@@ -368,7 +373,11 @@ const App = () => {
 
           {/* === CENTRE (Inchangé) === */}
           <div className="h-full flex flex-col justify-center items-center relative z-10 bg-slate-950 border-x border-slate-900">
-            <GestureArea className="mb-1 md:mb-2 text-center w-full py-1 md:py-2 hover:bg-slate-900/50 rounded-xl group relative" onSwipeLeft={() => modifyPeriod(1)} onSwipeRight={() => modifyPeriod(-1)}>
+            <GestureArea
+              className="mb-1 md:mb-2 text-center w-full py-1 md:py-2 hover:bg-slate-900/50 rounded-xl group relative"
+              onTap={() => modifyPeriod(1)}
+              onSwipeRight={() => modifyPeriod(-1)}
+            >
               <span className="block text-slate-500 text-[10px] md:text-sm uppercase font-bold tracking-[0.2em] mb-0.5">{config.periodName}</span>
               <div className="flex items-center justify-center gap-4">
                 {!tvMode && <Minimize size={16} className="text-slate-700" />}
@@ -415,14 +424,17 @@ const App = () => {
           <div className="h-full flex flex-col bg-gradient-to-bl from-slate-900 to-slate-950 relative overflow-hidden">
 
             {/* ZONE HAUTE : HARMONISÉE AVEC DOMICILE */}
-            <div className="w-full shrink-0 flex flex-col" style={{ height: '40%' }}>
+            {/* MODIFICATION : Hauteur réduite à 37% */}
+            <div className="w-full shrink-0 flex flex-col" style={{ height: '37%' }}>
               {/* BARRE DE COULEUR (Désormais à l'intérieur du conteneur de 40% comme à gauche) */}
               <div className="h-1 w-full shrink-0" style={{ backgroundColor: awayColor }}></div>
 
               {/* Conteneur Logo/Nom */}
-              <div className="flex-1 w-full flex items-center justify-center p-4 md:p-8 overflow-hidden">
+              {/* MODIFICATION : Padding top réduit (pt-2 md:pt-4) pour remonter le contenu vers la barre */}
+              <div className="flex-1 w-full flex items-end justify-center px-6 pt-2 pb-2 md:px-10 md:pt-4 md:pb-2 overflow-hidden">
                 {useAwayLogo && awayLogo ? (
-                  <div className="w-full h-full flex justify-center items-center">
+                  // MODIFICATION : Hauteur max fixée à 90% pour éviter l'écrasement
+                  <div className="w-full h-[90%] flex justify-center items-center">
                     <img src={awayLogo} alt="Away Logo" className="max-h-full max-w-full object-contain drop-shadow-2xl" />
                   </div>
                 ) : (
@@ -435,14 +447,11 @@ const App = () => {
             <GestureArea
               className="w-full flex flex-col items-center justify-center relative group p-0"
               style={{ height: '45%' }}
-              onSwipeLeft={() => modifyScore('away', 1)}
+              onTap={() => modifyScore('away', 1)}
               onSwipeRight={() => modifyScore('away', -1)}
             >
               {!tvMode && (
-                <>
-                  <div className="absolute left-2 top-1/2 -translate-y-1/2 text-white/5 group-hover:text-white/20 transition-colors"><ChevronLeft size={40} /></div>
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-white/5 group-hover:text-white/20 transition-colors"><ChevronRight size={40} /></div>
-                </>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-white/5 group-hover:text-white/20 transition-colors"><ChevronRight size={40} /></div>
               )}
               <span
                 className="font-bold leading-none select-none tabular-nums relative z-10"
@@ -456,9 +465,14 @@ const App = () => {
             </GestureArea>
 
             {/* ZONE BASSE : FIXE 15% - MODIFIÉ (A COTE) */}
-            <div className="w-full shrink-0 grid grid-cols-1 pb-2 bg-slate-900/20" style={{ height: '15%', minHeight: '60px' }}>
+            {/* MODIFICATION : Hauteur augmentée à 18% */}
+            <div className="w-full shrink-0 grid grid-cols-1 pb-2 bg-slate-900/20" style={{ height: '18%', minHeight: '60px' }}>
               {config.showSets && (
-                <GestureArea className="h-full w-full flex flex-col items-center justify-center border-t border-slate-800/50 group relative" onTap={() => modifySets('away', 1)} onSwipeLeft={() => modifySets('away', 1)} onSwipeRight={() => modifySets('away', -1)}>
+                <GestureArea
+                  className="h-full w-full flex flex-col items-center justify-center border-t border-slate-800/50 group relative"
+                  onTap={() => modifySets('away', 1)}
+                  onSwipeRight={() => modifySets('away', -1)}
+                >
                   <div className="flex flex-row items-center justify-center h-full w-full gap-4">
                     <span className="text-xs md:text-base font-bold uppercase text-slate-500 tracking-wider">Sets</span>
                     <div className="text-4xl md:text-6xl font-bold leading-none tabular-nums">{awaySets}</div>
@@ -468,7 +482,8 @@ const App = () => {
               {config.showFouls && (
                 <GestureArea
                   className="h-full w-full flex flex-col items-center justify-center border-t border-slate-800/50 group relative transition-colors"
-                  onSwipeLeft={() => modifyFouls('away', 1)} onSwipeRight={() => modifyFouls('away', -1)}
+                  onTap={() => modifyFouls('away', 1)}
+                  onSwipeRight={() => modifyFouls('away', -1)}
                 >
                   <div className="flex flex-row items-center justify-center h-full w-full gap-4">
                     <span className={`text-xs md:text-base font-bold uppercase tracking-wider flex items-center gap-2 ${awayFouls >= config.foulLimit ? 'text-red-200' : 'text-slate-500'}`}>
@@ -486,9 +501,9 @@ const App = () => {
 
       {!tvMode && (
         <div className="bg-slate-900 py-2 px-4 border-t border-slate-800 flex justify-center items-center gap-6 text-[10px] md:text-sm text-slate-400 w-full shrink-0">
-          <div className="flex items-center gap-2"><span className="font-bold text-slate-300">SCORES :</span><span className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded">Slide <ChevronLeft size={14} /> +1</span><span className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded">Slide <ChevronRight size={14} /> -1</span></div>
+          <div className="flex items-center gap-2"><span className="font-bold text-slate-300">SCORES/FAUTES/SETS :</span><span className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded">Tap/Clic <MousePointerClick size={14} /> +1</span><span className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded">Slide <ChevronRight size={14} /> -1</span></div>
           <div className="w-px h-4 bg-slate-700"></div>
-          <div className="flex items-center gap-2"><span className="font-bold text-slate-300">ACTION :</span><span className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded">Tap Court</span></div>
+          <div className="flex items-center gap-2"><span className="font-bold text-slate-300">ACTION :</span><span className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded">Tap Court (Volley)</span></div>
         </div>
       )}
     </div>
