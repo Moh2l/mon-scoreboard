@@ -1,6 +1,4 @@
-// Version: S2.0
-// Release: Production Stable
-// Features: Hard Lock 40/40/20, Audio Engine V5, Visual FX, PWA Support
+// Version: S2.1 (Patch iOS Landscape Fullscreen)
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, Settings, Monitor, Smartphone, Trophy, Minimize, Maximize, ChevronLeft, ChevronRight, AlertCircle, Upload, Type, Image as ImageIcon, ArrowLeft, ArrowRight, Plus, Minus, MousePointerClick, Volume2, Sparkles, Download, Wifi, WifiOff, Share } from 'lucide-react';
 
@@ -186,15 +184,31 @@ const App = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [tvMode, setTvMode] = useState(false);
 
+  // --- AUDIO & FX STATES ---
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundType, setSoundType] = useState('buzzer_fiba');
   const [animEnabled, setAnimEnabled] = useState(true);
   const [animType, setAnimType] = useState('zoom');
   const [scoringAnim, setScoringAnim] = useState(null);
 
+  // --- PWA STATES ---
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    // --- FIX iOS LANDSCAPE BACKGROUND ---
+    // Force la couleur de fond sur le body pour remplir les zones de sécurité (encoches)
+    document.body.style.backgroundColor = tvMode ? '#000000' : '#020617';
+
+    // Tente de forcer le viewport-fit=cover si ce n'est pas déjà fait
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+      if (!meta.content.includes('viewport-fit=cover')) {
+        meta.content += ', viewport-fit=cover';
+      }
+    }
+  }, [tvMode]);
 
   useEffect(() => {
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -471,13 +485,13 @@ const App = () => {
         <GoalAnimation show={scoringAnim === 'home'} color={homeColor} term={config.scoreTerm} type={animType} />
         <GoalAnimation show={scoringAnim === 'away'} color={awayColor} term={config.scoreTerm} type={animType} />
 
-        {/* GRILLE */}
+        {/* GRILLE (40/40/20 - STRICT) */}
         <div className="flex-1 w-full relative grid grid-cols-[1fr_minmax(140px,28%)_1fr]">
 
           {/* === HOME === */}
           <div className="h-full flex flex-col bg-gradient-to-br from-slate-900 to-slate-950 relative overflow-hidden">
 
-            {/* LOGO (40% - LOCKED - ABSOLUTE IMAGE) */}
+            {/* LOGO (40% - LOCKED - IMAGE ABSOLUE) */}
             <div className="w-full flex-none h-[40%] flex flex-col overflow-hidden relative" style={{ flex: 'none' }}>
               <div className="h-1 w-full shrink-0 absolute top-0 left-0 z-10" style={{ backgroundColor: homeColor }}></div>
               <div className="absolute inset-0 flex items-center justify-center p-4">
