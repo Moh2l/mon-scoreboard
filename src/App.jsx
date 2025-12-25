@@ -1,6 +1,6 @@
-// Version: Scoreboard 4.0
-// Release: Production Stable
-// Features: Hard Lock 40/40/20, 4 Fonts (Standard/Digital/TV/Bold), Custom Colors, PWA, Audio
+// Version: Scoreboard 4.1
+// Release: Production Stable (Fix: Team Colors & Logos Restored)
+// Features: Hard Lock 40/40/20, 4 Fonts, Custom Colors, PWA, Audio, Team Config
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, Settings, Monitor, Smartphone, Trophy, Minimize, Maximize, ChevronLeft, ChevronRight, AlertCircle, Upload, Type, Image as ImageIcon, ArrowLeft, ArrowRight, Plus, Minus, MousePointerClick, Volume2, Sparkles, Download, Wifi, WifiOff, Share, Palette, Sun, Moon } from 'lucide-react';
 
@@ -25,7 +25,6 @@ const ANIMATION_OPTIONS = [
   { id: 'pulse', name: "Pulsation Néon" }
 ];
 
-// LISTE DE 4 FONTS (Sport supprimé)
 const FONTS = [
   { id: 'standard', name: 'Standard', family: "'Inter', sans-serif" },
   { id: 'digital', name: 'Digital', family: "'Share Tech Mono', monospace" },
@@ -41,7 +40,6 @@ const PRESET_COLORS = [
 
 const AnimationStyles = () => (
   <style>{`
-    /* Import optimisé sans Chakra Petch */
     @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Inter:wght@400;700;900&family=Russo+One&family=Share+Tech+Mono&display=swap');
 
     @keyframes anim-zoom { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
@@ -498,7 +496,7 @@ const App = () => {
                 </div>
               </div>
 
-              {/* DURÉE & NOMS */}
+              {/* DURÉE & TEAMS (RESTORATION DU BLOC COMPLET) */}
               <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-700">
                 <label className="block text-xs uppercase text-slate-400 font-bold mb-2">Temps (Min)</label>
                 <div className="flex items-center gap-4 justify-center bg-zinc-800 p-2 rounded border border-zinc-600">
@@ -507,9 +505,36 @@ const App = () => {
                   <button onClick={() => handleTimeChange(config.timePerPeriod + 1)} className="p-2 hover:bg-zinc-700 rounded text-white"><Plus size={24} /></button>
                 </div>
               </div>
+
+              {/* TEAMS CONFIGURATION (RESTORED) */}
               <div className="grid grid-cols-2 gap-4">
-                <input value={homeName} onChange={e => setHomeName(e.target.value)} className="w-full bg-zinc-800 p-3 rounded-xl border border-zinc-600 text-sm text-white" placeholder="Domicile" />
-                <input value={awayName} onChange={e => setAwayName(e.target.value)} className="w-full bg-zinc-800 p-3 rounded-xl border border-zinc-600 text-sm text-white" placeholder="Visiteur" />
+                {/* HOME CONFIG */}
+                <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-700">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-xs uppercase text-slate-400 font-bold" style={{ color: homeColor }}>Domicile</label>
+                    <div className="flex bg-zinc-800 rounded p-1">
+                      <button onClick={() => setUseHomeLogo(false)} className={`p-1 rounded ${!useHomeLogo ? 'bg-indigo-600' : 'text-zinc-400'}`}><Type size={16} /></button>
+                      <button onClick={() => setUseHomeLogo(true)} className={`p-1 rounded ${useHomeLogo ? 'bg-indigo-600' : 'text-zinc-400'}`}><ImageIcon size={16} /></button>
+                    </div>
+                  </div>
+                  {!useHomeLogo ? <input value={homeName} onChange={e => setHomeName(e.target.value)} className="w-full bg-zinc-800 p-2 rounded border border-zinc-600 mb-2 text-white" placeholder="Nom Équipe" />
+                    : <div className="flex gap-2 items-center"><label className="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 p-2 rounded border border-zinc-600 flex items-center justify-center gap-2 text-sm text-zinc-300"><Upload size={16} /> Logo...<input type="file" accept="image/*" className="hidden" onChange={(e) => handleLogoUpload(e, 'home')} /></label>{homeLogo && <img src={homeLogo} alt="Preview" className="h-10 w-10 object-contain bg-black/20 rounded" />}</div>}
+                  <input type="color" value={homeColor} onChange={e => setHomeColor(e.target.value)} className="w-full h-8 rounded cursor-pointer mt-2 bg-transparent" />
+                </div>
+
+                {/* AWAY CONFIG */}
+                <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-700">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-xs uppercase text-slate-400 font-bold" style={{ color: awayColor }}>Visiteur</label>
+                    <div className="flex bg-zinc-800 rounded p-1">
+                      <button onClick={() => setUseAwayLogo(false)} className={`p-1 rounded ${!useAwayLogo ? 'bg-indigo-600' : 'text-zinc-400'}`}><Type size={16} /></button>
+                      <button onClick={() => setUseAwayLogo(true)} className={`p-1 rounded ${useAwayLogo ? 'bg-indigo-600' : 'text-zinc-400'}`}><ImageIcon size={16} /></button>
+                    </div>
+                  </div>
+                  {!useAwayLogo ? <input value={awayName} onChange={e => setAwayName(e.target.value)} className="w-full bg-zinc-800 p-2 rounded border border-zinc-600 mb-2 text-white" placeholder="Nom Équipe" />
+                    : <div className="flex gap-2 items-center"><label className="flex-1 cursor-pointer bg-zinc-800 hover:bg-zinc-700 p-2 rounded border border-zinc-600 flex items-center justify-center gap-2 text-sm text-zinc-300"><Upload size={16} /> Logo...<input type="file" accept="image/*" className="hidden" onChange={(e) => handleLogoUpload(e, 'away')} /></label>{awayLogo && <img src={awayLogo} alt="Preview" className="h-10 w-10 object-contain bg-black/20 rounded" />}</div>}
+                  <input type="color" value={awayColor} onChange={e => setAwayColor(e.target.value)} className="w-full h-8 rounded cursor-pointer mt-2 bg-transparent" />
+                </div>
               </div>
 
             </div>
