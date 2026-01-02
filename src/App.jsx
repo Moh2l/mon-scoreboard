@@ -1,5 +1,5 @@
-// Version: Scoreboard 4.56
-// Release: Production (Fix: Fullscreen Error Handling)
+// Version: Scoreboard 4.57
+// Release: Production (Fix: iOS White Bars / Safe Area Background)
 // Features: Hard Lock 40/40/20, Precision Timer, Media Overlay, PWA, Audio
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Settings, Monitor, Smartphone, Trophy, Minimize, Maximize, ChevronLeft, ChevronRight, AlertCircle, Upload, Type, Image as ImageIcon, ArrowLeft, ArrowRight, Plus, Minus, MousePointerClick, Volume2, Sparkles, Download, Wifi, WifiOff, Share, Palette, Sun, Moon, Keyboard, Megaphone, X, ArrowUp } from 'lucide-react';
@@ -206,7 +206,7 @@ const GestureArea = ({ children, onTap, onSwipeLeft, onSwipeRight, onSwipeDown, 
   const handleTouchEnd = (e) => {
     cancelPress();
     if (disabled || !touchStartX.current) return;
-    if (isLongPress.current) return;
+    if (isLongPress.current) return; // Ignore standard gestures if long press triggered
 
     const diffX = e.changedTouches[0].clientX - touchStartX.current;
     const diffY = e.changedTouches[0].clientY - touchStartY.current;
@@ -352,6 +352,27 @@ const App = () => {
   const [fontStyle, setFontStyle] = useState('standard');
 
   useEffect(() => {
+    // --- FIX iOS LANDSCAPE BACKGROUND (CRITIQUE) ---
+    // Force la couleur de fond sur le body ET le html pour couvrir les zones "safe area"
+    document.documentElement.style.backgroundColor = bgColor;
+    document.body.style.backgroundColor = bgColor;
+
+    // Tente de forcer le viewport-fit=cover
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+      if (!meta.content.includes('viewport-fit=cover')) {
+        meta.content += ', viewport-fit=cover';
+      }
+    } else {
+      // Création si inexistant (rare en React mais sécurité)
+      const newMeta = document.createElement('meta');
+      newMeta.name = 'viewport';
+      newMeta.content = 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+      document.head.appendChild(newMeta);
+    }
+  }, [bgColor]);
+
+  useEffect(() => {
     const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(isIosDevice);
     const promptHandler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
@@ -379,7 +400,7 @@ const App = () => {
     if (enable) {
       try {
         if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
-          // On tente, mais on ne bloque pas si ça échoue
+          // On tente, mais on ne bloque pas si ça échoue (Canvas/iFrame)
           await document.documentElement.requestFullscreen().catch(e => console.log("FS blocked", e));
         }
       } catch (err) { console.log("FS error ignored"); }
@@ -579,6 +600,7 @@ const App = () => {
   };
 
   return (
+    // CONTENEUR PRINCIPAL
     <div className={`h-[100dvh] w-full overflow-hidden flex flex-col font-sans select-none transition-colors duration-500 ${tvMode ? 'items-center justify-center' : ''}`}
       style={{ backgroundColor: bgColor, color: textColor, fontFamily: getFontFamily() }}>
       <AnimationStyles />
@@ -832,42 +854,39 @@ const App = () => {
           <div className="h-full flex flex-col justify-center items-center relative z-10 border-x"
             style={{ borderColor: textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
 
-            {/* PERIODE */}
-            <GestureArea className="mb-1 md:mb-2 text-center w-full py-1 md:py-2 rounded-xl group relative hover:opacity-80" onTap={() => modifyPeriod(1)} onSwipeRight={() => modifyPeriod(-1)}>
-              <span className="block opacity-50 text-[10px] md:text-sm uppercase font-bold tracking-[0.2em] mb-0.5">{config.periodName}</span>
-              <div className="flex items-center justify-center gap-4"><span className="text-4xl md:text-7xl font-bold select-none">{period}</span></div>
-            </GestureArea>
-
-            {/* TIMER - ZONE SECRETE LONG PRESS POUR MEDIA */}
-            <div className="w-full relative flex flex-col items-center">
-              {/* Invisible Trigger for Media (Long Press - New Logic) */}
-              <div className="absolute inset-0 z-50 w-full h-full cursor-pointer"
+            {/* PERIODE - LONG PRESS FOR MEDIA */}
+            <div className="w-full relative">
+              <div className="absolute inset-0 z-50 cursor-pointer"
                 style={{ pointerEvents: tvMode ? 'auto' : 'none' }}>
                 <GestureArea className="w-full h-full" onLongPress={() => setMediaActive(!mediaActive)} />
               </div>
-
-              {sport === 'volleyball' ? (
-                <GestureArea className="w-full px-2 py-2 flex flex-col items-center justify-center cursor-ew-resize" onSwipeLeft={() => setService('home')} onSwipeRight={() => setService('away')} onTap={toggleService}>
-                  <div className={`w-full py-2 md:py-6 rounded-3xl border-4 shadow-2xl text-center flex flex-col items-center gap-1 md:gap-4 transition-colors duration-500 ${serviceSide === 'home' ? 'border-l-8' : 'border-r-8'}`} style={{ backgroundColor: 'transparent', borderColor: serviceSide === 'home' ? homeColor : awayColor }}>
-                    <span className="opacity-50 font-bold uppercase tracking-widest text-[10px] md:text-sm">Service</span>
-                    <div className="transform transition-transform duration-300 scale-110">
-                      {serviceSide === 'home' ? <ArrowLeft size={tvMode ? 50 : 40} strokeWidth={3} style={{ color: homeColor }} className="animate-pulse-slow" /> : <ArrowRight size={tvMode ? 50 : 40} strokeWidth={3} style={{ color: awayColor }} className="animate-pulse-slow" />}
-                    </div>
-                  </div>
-                </GestureArea>
-              ) : (
-                <GestureArea className="w-full px-1 md:px-2 py-1 md:py-2" isTimer={true} onTap={toggleTimer}>
-                  <div className={`py-2 md:py-8 text-center relative overflow-hidden transition-all duration-75 ${config.countDirection === 'none' ? 'opacity-20 grayscale' : ''}`}>
-                    {/* PRECISION TIMER DISPLAY */}
-                    <span className={`font-bold tabular-nums leading-none transition-colors ${isRunning ? 'text-green-500' : 'text-red-500'}`}
-                      style={{ fontSize: 'clamp(3rem, 8vw, 8rem)' }}>
-                      {formatTime(timeLeft)}
-                    </span>
-                    {!isRunning && config.countDirection !== 'none' && <div className="absolute inset-0 flex items-center justify-center"><div className="bg-red-600/20 p-3 rounded-full backdrop-blur-sm animate-pulse"><Play size={40} className="fill-white" style={{ color: '#fff' }} /></div></div>}
-                  </div>
-                </GestureArea>
-              )}
+              <GestureArea className="mb-1 md:mb-2 text-center w-full py-1 md:py-2 rounded-xl group relative hover:opacity-80" onTap={() => modifyPeriod(1)} onSwipeRight={() => modifyPeriod(-1)}>
+                <span className="block opacity-50 text-[10px] md:text-sm uppercase font-bold tracking-[0.2em] mb-0.5">{config.periodName}</span>
+                <div className="flex items-center justify-center gap-4"><span className="text-4xl md:text-7xl font-bold select-none">{period}</span></div>
+              </GestureArea>
             </div>
+
+            {/* TIMER */}
+            {sport === 'volleyball' ? (
+              <GestureArea className="w-full px-2 py-2 flex flex-col items-center justify-center cursor-ew-resize" onSwipeLeft={() => setService('home')} onSwipeRight={() => setService('away')} onTap={toggleService}>
+                <div className={`w-full py-2 md:py-6 rounded-3xl border-4 shadow-2xl text-center flex flex-col items-center gap-1 md:gap-4 transition-colors duration-500 ${serviceSide === 'home' ? 'border-l-8' : 'border-r-8'}`} style={{ backgroundColor: 'transparent', borderColor: serviceSide === 'home' ? homeColor : awayColor }}>
+                  <span className="opacity-50 font-bold uppercase tracking-widest text-[10px] md:text-sm">Service</span>
+                  <div className="transform transition-transform duration-300 scale-110">
+                    {serviceSide === 'home' ? <ArrowLeft size={tvMode ? 50 : 40} strokeWidth={3} style={{ color: homeColor }} className="animate-pulse-slow" /> : <ArrowRight size={tvMode ? 50 : 40} strokeWidth={3} style={{ color: awayColor }} className="animate-pulse-slow" />}
+                  </div>
+                </div>
+              </GestureArea>
+            ) : (
+              <GestureArea className="w-full px-1 md:px-2 py-1 md:py-2" isTimer={true} onTap={toggleTimer}>
+                <div className={`py-2 md:py-8 text-center relative overflow-hidden transition-all duration-75 ${config.countDirection === 'none' ? 'opacity-20 grayscale' : ''}`}>
+                  <span className={`font-bold tabular-nums leading-none transition-colors ${isRunning ? 'text-green-500' : 'text-red-500'}`}
+                    style={{ fontSize: 'clamp(3rem, 8vw, 8rem)' }}>
+                    {formatTime(timeLeft)}
+                  </span>
+                  {!isRunning && config.countDirection !== 'none' && <div className="absolute inset-0 flex items-center justify-center"><div className="bg-red-600/20 p-3 rounded-full backdrop-blur-sm animate-pulse"><Play size={40} className="fill-white" style={{ color: '#fff' }} /></div></div>}
+                </div>
+              </GestureArea>
+            )}
 
             {/* CONTROLS */}
             {!tvMode && sport !== 'volleyball' && config.countDirection !== 'none' && (
